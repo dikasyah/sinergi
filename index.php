@@ -20,7 +20,25 @@ $container['view'] = function($container){
 };
 
 $container['db'] = function(){
-    return new PDO('mysql:host=localhost; dbname=attandance', 'admin', 'admin123');
+    $host = 'localhost';
+    $db   = 'sinergi';
+    $user = 'admin';
+    $pass = 'admin123';
+    $port = "3306";
+    $charset = 'utf8mb4';
+
+    $options = [
+        \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+        \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        \PDO::ATTR_EMULATE_PREPARES   => false,
+    ];
+    $dsn = "mysql:host=$host;dbname=$db;charset=$charset;port=$port";
+    try {
+        $pdo = new \PDO($dsn, $user, $pass, $options);
+        return $pdo;
+    } catch (\PDOException $e) {
+        throw new \PDOException($e->getMessage(), (int)$e->getCode());
+    }
 };
 
 $container['auth'] = function(){
@@ -38,24 +56,53 @@ $container['auth'] = function(){
 };
 
 $app->get('/', function($request, $response){
-    if($this->auth == 'logged_in'){
-        return $this->view->render($response, 'user/index.twig');
-    }else{
-        return $this->view->render($response, 'auth/login.twig');
-    }
+    return $this->view->render($response, 'index.twig');
 });
 
-$app->get('/user', function($request, $response, $args){
-    $user = $this->db->query("SELECT * FROM user")->fetchAll(PDO::FETCH_OBJ);
+$app->get('/master', function($request, $response, $args){
+    $master = $this->db->query("SELECT * FROM master")->fetchAll();
 
-    return $response->withJson($user);
+    return $response->withJson($master,200);
 });
 
-$app->get('/user/{email}', function($request, $response, $args){
-    $email = $args['email'];
-    $user = $this->db->query("SELECT * FROM user WHERE email = '$email'")->fetchAll(PDO::FETCH_OBJ);
+$app->get('/detail', function($request, $response, $args){
+    $detail = $this->db->query("SELECT * FROM detail")->fetchAll();
 
-    return $response->withJson($user);
+    return $response->withJson($detail,200);
+});
+
+$app->get('/master/{kode_master}', function($request, $response, $args){
+    $kode_master = $args['kode_master'];
+    $master = $this->db->query("SELECT * FROM master WHERE kode_master = '$kode_master'")->fetchAll();
+
+    return $response->withJson($master,200);
+});
+
+$app->post("/detail/update", function ($request, $response, $args){
+    $now = date("Y-m-d H:i:s");
+    $detail = $request->getParsedBody();
+    $kode_detail = $detail['inputKodeDetail'];
+    $nama_detail = $detail['inputNameDetail'];
+    $this->db->query("UPDATE detail SET nama_detail = '$nama_detail', updated_at = '$now' WHERE kode_detail = '$kode_detail'");
+
+    return $response->withJson("success", 200);
+});
+
+$app->post("/master/create", function ($request, $response, $args){
+    $now = date("Y-m-d H:i:s");
+    $master = $request->getParsedBody();
+    $kode_master = $master['inputKodeMaster'];
+    $nama_master = $master['inputNamaMaster'];
+    $this->db->query("INSERT INTO master (kode_master,nama_master,created_at,updated_at) VALUES ('$kode_master','$nama_master','$now','$now')");
+
+    return $response->withJson("success", 200);
+});
+
+$app->get('/cetak', function($request, $response){
+    $detail = $this->db->query("SELECT * FROM detail")->fetchAll();
+    return $this->view->render($response, 'laporan/stock.twig', [
+        "detail" => $detail
+    ]);
 });
 
 $app->run();

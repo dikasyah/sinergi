@@ -1,0 +1,34 @@
+{% extends "layout/console.html" %}
+
+{% block title %} Laporan Stock {% endblock %}
+
+{% block content %}
+    <div>
+        <h1 style="text-align: center;">Laporan Stock</h1>
+        <br>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Kode Master</th>
+                    <th>Kode Detail</th>
+                    <th>Nama Detail</th>
+                    <th>Jumlah</th>
+                    <th>Satuan</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in detail %}
+                    <tr>
+                        <td>{{ d['kode_master'] }}</td>
+                        <td>{{ d['kode_detail'] }}</td>
+                        <td>{{ d['nama_detail'] }}</td>
+                        <td>{{ d['jumlah'] }}</td>
+                        <td>{{ d['satuan'] }}</td>
+                        <td>{{ d['updated_at'] }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
